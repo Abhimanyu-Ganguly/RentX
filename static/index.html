@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RENTX | Peer-to-Peer Equipment Rentals</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css?v=2001">
+  <script>(function(){var t=localStorage.getItem('theme')||'light';if(t==='dark')document.documentElement.setAttribute('data-theme','dark');})();</script>
+  <link rel="icon" href="/static/img/rentx-icon.svg">
+</head>
+<body>
+
+  <!-- ========== HEADER ========== -->
+  <header class="site-header" role="banner">
+    <div class="header-inner">
+      <a href="#browse" class="brand" aria-label="RENTX Home">
+        <img src="/static/img/rentx-icon.svg" alt="RentX Icon" class="brand-logo" style=" width: 32px; height: 32px; background: transparent; color: transparent; border-radius: 0;">
+        <div class="brand-name" id="app-title">RENTX</div>
+      </a>
+
+      <nav class="main-nav" role="navigation" aria-label="Main navigation">
+        <ul class="nav-list">
+          <li><a href="#browse" class="nav-link active" data-view="browse">Browse</a></li>
+          <li><a href="#need-search" class="nav-link" data-view="need-search">Smart Match</a></li>
+          <li><a href="#list-item" class="nav-link" data-view="list-item">List Item</a></li>
+          <li><a href="#rentals" class="nav-link" data-view="rentals">My Rentals</a></li>
+          <li><a href="#activity" class="nav-link" data-view="activity">Activity</a></li>
+          <li><a href="#profile" class="nav-link" data-view="profile">Reputation</a></li>
+          <li><a href="#about" class="nav-link" data-view="about">About</a></li>
+          <li id="nav-admin" style="display:none;"><a href="#admin" class="nav-link" data-view="admin">Admin</a></li>
+        </ul>
+      </nav>
+
+      <div class="header-actions">
+        
+        <div class="nav-notifications" id="nav-notifications" style="position: relative; display: none; align-items: center;">
+          <button class="btn btn-secondary btn-icon" onclick="app.toggleNotifications()" style="position: relative; padding: 0.5rem; background: transparent; border: none; font-size: 1.2rem; cursor: pointer;">
+            🔔
+            <span id="notif-badge" style="display: none; position: absolute; top: 0px; right: 0px; background: var(--danger); color: white; border-radius: 50%; font-size: 0.7rem; padding: 2px 6px; font-weight: bold;">0</span>
+          </button>
+          
+          <div id="notif-dropdown" style="display: none; position: absolute; top: 100%; right: 0; width: 320px; max-height: 400px; overflow-y: auto; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow-lg); z-index: 1000; flex-direction: column;">
+            <div style="padding: 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;">
+              <strong style="font-size: 0.95rem;">Notifications</strong>
+              <button class="btn btn-secondary btn-sm" onclick="app.markAllNotificationsRead()" style="font-size: 0.75rem; padding: 4px 8px;">Mark all read</button>
+            </div>
+            <div id="notif-list" style="display: flex; flex-direction: column;">
+              <!-- Notifications injected here -->
+            </div>
+          </div>
+        </div>
+<button id="theme-toggle-btn" class="theme-toggle" onclick="app.toggleTheme()" aria-label="Toggle theme">
+          <span id="theme-icon">🌙</span>
+        </button>
+        <button class="user-chip" id="user-chip-btn" style="display:none;" aria-label="User Profile">
+          <img class="user-chip-avatar" id="current-user-avatar" src="" alt="">
+          <span class="user-chip-text" id="current-user-name">User</span>
+        </button>
+        <button id="header-login-btn" class="btn btn-secondary btn-sm" onclick="app.navigateTo('login')">Sign In</button>
+        <button id="header-signup-btn" class="btn btn-primary btn-sm" onclick="app.navigateTo('signup')">Sign Up</button>
+        <button id="header-logout-btn" class="btn btn-secondary btn-sm" onclick="app.logout()" style="display:none;">Logout</button>
+      <button class="hamburger" id="hamburger-btn" aria-label="Open menu" aria-expanded="false" onclick="app.toggleMobileNav()">&#9776;</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile nav drawer -->
+  <nav class="mobile-nav" id="mobile-nav" aria-label="Mobile navigation">
+    <ul>
+      <li><a href="#browse" class="nav-link" data-view="browse" onclick="app.closeMobileNav()">Browse</a></li>
+      <li><a href="#need-search" class="nav-link" data-view="need-search" onclick="app.closeMobileNav()">Smart Match</a></li>
+      <li><a href="#list-item" class="nav-link" data-view="list-item" onclick="app.closeMobileNav()">List Item</a></li>
+      <li><a href="#rentals" class="nav-link" data-view="rentals" onclick="app.closeMobileNav()">My Rentals</a></li>
+      <li><a href="#activity" class="nav-link" data-view="activity" onclick="app.closeMobileNav()">Activity</a></li>
+      <li><a href="#profile" class="nav-link" data-view="profile" onclick="app.closeMobileNav()">Reputation</a></li>
+      <li><a href="#about" class="nav-link" data-view="about" onclick="app.closeMobileNav()">About</a></li>
+      <li id="mobile-nav-admin" style="display:none;"><a href="#admin" class="nav-link" data-view="admin" onclick="app.closeMobileNav()">Admin</a></li>
+    </ul>
+  </nav>
+
+  <!-- Hidden user select for backward compatibility -->
+  <select id="user-select" style="display:none" aria-hidden="true"></select>
+
+  <!-- ========== MAIN ========== -->
+  <main class="main-content" role="main">
+
+    <!-- ===== VIEW: LOGIN ===== -->
+    <section class="view" id="view-login" aria-label="Sign In">
+      <div class="auth-split">
+        <div class="auth-container">
+          <div class="auth-header">
+            <div class="brand" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: var(--sp-4);">
+              <img src="/static/img/rentx-icon.svg" alt="RentX Icon" class="brand-logo" style="width: 32px; height: 32px; background: transparent; color: transparent; border-radius: 0;">
+              <div class="brand-name" style="font-weight: 800; font-size: 1.25rem; letter-spacing: -0.5px;">RENTX</div>
+            </div>
+            <h2 class="auth-title">Welcome back</h2>
+            <p class="auth-subtitle">Sign in to your account</p>
+          </div>
+          <form id="login-form" onsubmit="app.handleLogin(event)">
+            <div class="form-group">
+              <label class="form-label" for="login-email">Email</label>
+              <input type="email" class="form-input" id="login-email" placeholder="name@example.com" required>
+            </div>
+            <div class="form-group">
+              <div class="flex justify-between items-center mb-1">
+                <label class="form-label" for="login-pass" style="margin:0;">Password</label>
+                <a href="#forgot-password" onclick="app.navigateTo('forgot-password'); return false;" class="text-sm">Forgot password?</a>
+              </div>
+              <input type="password" class="form-input" id="login-pass" placeholder="••••••••" required>
+            </div>
+            <div id="login-error" class="form-error mb-4"></div>
+            <button type="submit" id="login-submit-btn" class="btn btn-primary btn-block">Sign In</button>
+          </form>
+          <div class="auth-footer">
+            Don't have an account? <a href="#signup" onclick="app.navigateTo('signup'); return false;">Create account</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    
+    <!-- ===== VIEW: FORGOT PASSWORD ===== -->
+    <section class="view" id="view-forgot-password" aria-label="Forgot Password">
+      <div class="auth-split">
+        <div class="auth-container">
+          <div class="auth-header">
+            <h2 class="auth-title">Forgot Password</h2>
+            <p class="auth-subtitle">Enter your email address and we'll help you reset your password.</p>
+          </div>
+          <form id="forgot-form" onsubmit="app.handleForgotPassword(event)">
+            <div class="form-group">
+              <label class="form-label" for="forgot-email">Email</label>
+              <input type="email" class="form-input" id="forgot-email" placeholder="name@example.com" required>
+            </div>
+            <button type="submit" id="forgot-submit-btn" class="btn btn-primary btn-block mb-4">Send Reset Link</button>
+          </form>
+          <div class="auth-footer">
+            <a href="#login" onclick="app.navigateTo('login'); return false;">Back to Login</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== VIEW: RESET PASSWORD ===== -->
+    <section class="view" id="view-reset-password" aria-label="Reset Password">
+      <div class="auth-split">
+        <div class="auth-container">
+          <div class="auth-header">
+            <h2 class="auth-title">Reset Password</h2>
+            <p class="auth-subtitle">Create a new password for your account.</p>
+          </div>
+          <form id="reset-form" onsubmit="app.handleResetPassword(event)">
+            <div class="form-group">
+              <label class="form-label" for="reset-pass">New Password</label>
+              <input type="password" class="form-input" id="reset-pass" placeholder="Create a password" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reset-confirm">Confirm New Password</label>
+              <input type="password" class="form-input" id="reset-confirm" placeholder="Confirm your password" required>
+            </div>
+            <div id="reset-error" class="form-error mb-4"></div>
+            <button type="submit" id="reset-submit-btn" class="btn btn-primary btn-block">Reset Password</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== VIEW: SIGNUP ===== -->
+    <section class="view" id="view-signup" aria-label="Register">
+      <div class="auth-split">
+        <div class="auth-container">
+          <div class="auth-header">
+            <div class="brand" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: var(--sp-4);">
+              <img src="/static/img/rentx-icon.svg" alt="RentX Icon" class="brand-logo" style="width: 32px; height: 32px; background: transparent; color: transparent; border-radius: 0;">
+              <div class="brand-name" style="font-weight: 800; font-size: 1.25rem; letter-spacing: -0.5px;">RENTX</div>
+            </div>
+            <h2 class="auth-title">Create an account</h2>
+            <p class="auth-subtitle">Join the peer-to-peer rental community</p>
+          </div>
+          <form id="signup-form" onsubmit="app.handleSignup(event)">
+            <div class="form-group">
+              <label class="form-label" for="signup-name">Full Name</label>
+              <input type="text" class="form-input" id="signup-name" placeholder="Jane Doe" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="signup-email">Email</label>
+              <input type="email" class="form-input" id="signup-email" placeholder="name@example.com" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="signup-pass">Password</label>
+              <input type="password" class="form-input" id="signup-pass" placeholder="Create a password" required oninput="app.checkPasswordStrength(this.value)">
+              <div id="password-strength" class="text-sm text-secondary mt-1" style="display:none;">
+                  Requirements: <span id="req-len" style="color:var(--danger)">Minimum 8 characters</span>
+                </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="signup-confirm">Confirm Password</label>
+              <input type="password" class="form-input" id="signup-confirm" placeholder="Confirm your password" required>
+            </div>
+              <div id="signup-error" class="form-error mb-4"></div>
+            <button type="submit" id="signup-submit-btn" class="btn btn-primary btn-block">Create Account</button>
+          </form>
+          <div class="auth-footer">
+            Already have an account? <a href="#login" onclick="app.navigateTo('login'); return false;">Sign in</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== VIEW: BROWSE ===== -->
+    <section class="view active" id="view-browse" aria-label="Browse equipment">
+      <div class="page-header">
+        <div>
+          <h2>Available Equipment</h2>
+          <p>Borrow what you need from verified peers</p>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filter-bar" role="search" aria-label="Filter equipment">
+        <div class="search-row">
+          <input type="text" class="form-input" id="browse-search-input" placeholder="Search equipment..." aria-label="Search equipment">
+          <button class="btn btn-primary" id="browse-search-btn" aria-label="Search">Search</button>
+        </div>
+        <div class="pills" role="tablist" aria-label="Category filter">
+          <button class="pill active" data-category="all" role="tab" aria-selected="true">All</button>
+          <button class="pill" data-category="tools" role="tab" aria-selected="false">Tools</button>
+          <button class="pill" data-category="camera gear" role="tab" aria-selected="false">Camera Gear</button>
+          <button class="pill" data-category="camping" role="tab" aria-selected="false">Camping</button>
+          <button class="pill" data-category="projector" role="tab" aria-selected="false">Projector</button>
+          <button class="pill" data-category="ladder" role="tab" aria-selected="false">Ladder</button>
+          <button class="pill" data-category="electronics" role="tab" aria-selected="false">Electronics</button>
+          <button class="pill" data-category="sports" role="tab" aria-selected="false">Sports</button>
+          <button class="pill" data-category="other" role="tab" aria-selected="false">Other</button>
+        </div>
+      </div>
+
+      <!-- Items Grid -->
+      <div class="items-grid" id="items-grid" aria-live="polite">
+        <div class="loading-state">Loading catalog...</div>
+      </div>
+    </section>
+
+    <!-- ===== VIEW: NEED SEARCH ===== -->
+    <section class="view" id="view-need-search" aria-label="Smart equipment matching">
+      <div class="hero-search">
+        <h2 style="background: linear-gradient(90deg, #0ea5e9, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 2.5rem; font-weight: 800;">What are you trying to do?</h2>
+        <p>Describe your task and we'll find the perfect equipment bundle from available inventory.</p>
+        <form class="hero-form" id="need-search-form">
+          <input type="text" class="hero-input" id="need-query-input" placeholder='Try "camping trip" or "mount shelves"...' aria-label="Describe your task" required>
+          <button type="submit" class="btn btn-primary btn-lg btn-pill">Find Equipment</button>
+        </form>
+        <div class="quick-tags">
+          <span>Popular:</span>
+          <button type="button" class="quick-tag" onclick="app.setNeedQuery('camping trip')">Camping Trip</button>
+          <button type="button" class="quick-tag" onclick="app.setNeedQuery('hang shelves')">Hang Shelves</button>
+          <button type="button" class="quick-tag" onclick="app.setNeedQuery('movie night')">Movie Night</button>
+          <button type="button" class="quick-tag" onclick="app.setNeedQuery('photoshoot')">Photoshoot</button>
+        </div>
+      </div>
+
+      <!-- Bundle Results -->
+      <div id="bundle-results-container" style="display:none">
+        <div class="bundle-summary">
+          <div>
+            <h3 id="bundle-title">Bundle Title</h3>
+            <p id="bundle-desc" style="font-size:.85rem;color:var(--text-secondary);margin-top:4px"></p>
+          </div>
+          <div class="bundle-stats">
+            <div>
+              <span class="bundle-stat-label">Daily Rate</span>
+              <span class="bundle-stat-value price" id="bundle-total-price">₹0/day</span>
+            </div>
+            <div>
+              <span class="bundle-stat-label">Total Deposit</span>
+              <span class="bundle-stat-value" id="bundle-total-deposit">₹0</span>
+            </div>
+          </div>
+        </div>
+        <div class="bundle-alert" id="bundle-missing-banner" style="display:none" role="alert"></div>
+        <div class="items-grid" id="bundle-items-grid" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <!-- ===== VIEW: LIST ITEM ===== -->
+    <section class="view" id="view-list-item" aria-label="List equipment">
+      <div class="page-header">
+        <div>
+          <h2>List Equipment</h2>
+          <p>Share your equipment with peers and earn</p>
+        </div>
+      </div>
+
+      <div class="form-card">
+        <form id="list-item-form" enctype="multipart/form-data">
+          <!-- Details Section -->
+          <div class="form-section">
+            <div class="form-section-title">Equipment Details</div>
+            <div class="form-section-desc">Tell us about the item you want to share</div>
+            <div class="form-group">
+              <label class="form-label" for="item-title">Title</label>
+              <input type="text" class="form-input" id="item-title" placeholder="e.g., DeWalt 20V Cordless Drill" required maxlength="100">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="item-category">Category</label>
+                <select class="form-select" id="item-category" required>
+                  <option value="tools">Tools</option>
+                  <option value="camera gear">Camera Gear</option>
+                  <option value="camping">Camping</option>
+                  <option value="projector">Projector</option>
+                  <option value="ladder">Ladder</option>
+                  <option value="electronics">Electronics</option>
+                  <option value="sports">Sports</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="item-tags">Tags</label>
+                <input type="text" class="form-input" id="item-tags" placeholder="drill, power tool, cordless" maxlength="200">
+                <span class="form-hint">Comma-separated keywords for matching</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="item-description">Description</label>
+              <textarea class="form-textarea" id="item-description" rows="3" placeholder="Describe the condition, any accessories included..." maxlength="500"></textarea>
+            </div>
+          </div>
+
+          <!-- Pricing Section -->
+          <div class="form-section">
+            <div class="form-section-title">Pricing &amp; Identity</div>
+            <div class="form-section-desc">Set fair prices. Deposit protects against damage.</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="item-value">Item Value (₹)</label>
+                <input type="number" class="form-input" id="item-value" min="1" step="0.01" placeholder="15000" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="item-price">Price / Day (₹)</label>
+                <input type="number" class="form-input" id="item-price" min="0" step="0.01" placeholder="500" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="item-deposit">Escrow Deposit (₹)</label>
+                <input type="number" class="form-input" id="item-deposit" min="0" step="0.01" placeholder="3000" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="item-serial">Serial Number</label>
+              <input type="text" class="form-input" id="item-serial" placeholder="Serial / model identifier" maxlength="100">
+              <span class="form-hint">Used for cryptographic identity hash (SHA-256)</span>
+            </div>
+          </div>
+
+          <!-- Condition Check Section -->
+          <div class="form-section">
+            <div class="form-section-title">Condition Checklist</div>
+            <div class="form-section-desc">Grade each part before listing</div>
+            <div id="dynamic-checklist-container"></div>
+          </div>
+
+          <!-- Photo Upload -->
+          <div class="form-group">
+            <label class="form-label" for="item-photo">Equipment Photo</label>
+            <input type="file" class="form-input" id="item-photo" accept="image/jpeg,image/png,image/webp">
+            <span class="form-hint">JPG, PNG, or WebP — max 5 MB. Used for cryptographic hashing.</span>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg btn-block" id="list-submit-btn">
+            Register &amp; Compute Cryptographic Passport
+          </button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ===== VIEW: RENTALS ===== -->
+    <section class="view" id="view-rentals" aria-label="My rentals">
+      <div class="page-header">
+        <div>
+          <h2>My Rentals</h2>
+          <p>Track your borrowing and lending activity</p>
+        </div>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Rental view">
+        <button class="tab-btn active" id="tab-as-renter" onclick="app.setRentalTab('renter')" role="tab" aria-selected="true">As Borrower</button>
+        <button class="tab-btn" id="tab-as-owner" onclick="app.setRentalTab('owner')" role="tab" aria-selected="false">As Lender</button>
+      </div>
+
+      <div id="rentals-list-container" aria-live="polite">
+        <div class="loading-state">Loading transactions...</div>
+      </div>
+    </section>
+
+    <!-- ===== VIEW: ACTIVITY (LEDGER) ===== -->
+    <section class="view" id="view-activity" aria-label="Activity Ledger">
+      <div class="page-header">
+        <div>
+          <h2>Activity &amp; Ledger</h2>
+          <p>Real-time notifications and financial summary</p>
+        </div>
+      </div>
+
+      <div class="rep-grid" style="margin-bottom:var(--sp-8)">
+        <div class="rep-card" style="padding:var(--sp-5);background:var(--success-soft);border-color:rgba(16,185,129,0.25)">
+          <div style="font-size:0.8rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em">Total Earned</div>
+          <div style="font-size:1.8rem;font-weight:800;color:var(--success)" id="dash-earned">₹0</div>
+        </div>
+        <div class="rep-card" style="padding:var(--sp-5);background:var(--bg-surface)">
+          <div style="font-size:0.8rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em">Total Spent</div>
+          <div style="font-size:1.8rem;font-weight:800;color:var(--text-primary)" id="dash-spent">₹0</div>
+        </div>
+        <div class="rep-card" style="padding:var(--sp-5);background:var(--warning-soft);border-color:rgba(245,158,11,0.25)">
+          <div style="font-size:0.8rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em">Escrow Locked</div>
+          <div style="font-size:1.8rem;font-weight:800;color:var(--warning)" id="dash-escrow">₹0</div>
+        </div>
+      </div>
+
+      <div class="timeline" id="activity-timeline" aria-live="polite">
+        <div class="loading-state">Loading activity...</div>
+      </div>
+    </section>
+
+    <!-- ===== VIEW: PASSPORT ===== -->
+    <section class="view" id="view-passport" aria-label="Item passport">
+      <div class="page-header">
+        <div>
+          <h2>Item Passport</h2>
+          <p>Cryptographic provenance chain — append-only SHA-256 hash verification</p>
+        </div>
+      </div>
+
+      <div class="passport-banner valid" id="passport-banner" role="status">
+        <div>
+          <div class="passport-title">
+            <span id="passport-status-icon" aria-hidden="true"></span>
+            <span id="passport-status-text"></span>
+          </div>
+          <div class="passport-sub" id="passport-status-sub"></div>
+        </div>
+        <div id="passport-tamper-control"></div>
+      </div>
+
+      <div class="timeline" id="passport-timeline" aria-label="Passport event timeline">
+        <div class="loading-state">Auditing SHA-256 hash chain...</div>
+      </div>
+    </section>
+
+    <!-- ===== VIEW: PROFILE ===== -->
+    <section class="view" id="view-profile" aria-label="Reputation profile">
+      <div class="page-header">
+        <div>
+          <h2>Reputation Dashboard</h2>
+          <p>Your multi-dimensional trust score across the network</p>
+        </div>
+      </div>
+
+            <!-- Location Settings -->
+      <div class="form-card" style="margin-bottom:var(--sp-8)">
+        <h3>Update My Location</h3>
+        <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:var(--sp-4)">Set your pickup location so borrowers know where to pick up items.</p>
+        <form id="update-location-form" style="display:flex;gap:var(--sp-4); flex-wrap: wrap;">
+          <input type="text" class="form-input" id="profile-location-input" placeholder="e.g., 123 Main St, Apt 4B" required style="flex:1; min-width: 200px;">
+          <button type="button" class="btn btn-secondary" onclick="app.autoLocate()">📍 Auto-Locate</button>
+          <button type="submit" class="btn btn-primary">Save Location</button>
+        </form>
+      </div>
+
+<div class="rep-grid">
+        <div class="rep-card">
+          <h3>Borrower Performance</h3>
+          <div id="renter-rep-content" aria-live="polite">
+            <div class="loading-state" style="padding:1.5rem">Computing metrics...</div>
+          </div>
+        </div>
+        <div class="rep-card">
+          <h3>Lender Performance</h3>
+          <div id="owner-rep-content" aria-live="polite">
+            <div class="loading-state" style="padding:1.5rem">Computing metrics...</div>
+          </div>
+        </div>
+      </div>
+          <div style="margin-top: var(--sp-8); display: flex; justify-content: flex-end; padding-top: var(--sp-4); border-top: 1px solid var(--border);">
+        <button class="btn btn-danger" onclick="app.logout()">Log Out</button>
+      </div>
+    </section>
+
+    <!-- ===== VIEW: ABOUT ===== -->
+    <section class="view" id="view-about" aria-label="About RENTX">
+      <div class="page-header">
+        <div>
+          <h2>How RENTX Works</h2>
+          <p>Architecture transparency — what's real, simulated, and planned</p>
+        </div>
+      </div>
+
+      <table class="fidelity-table">
+        <thead>
+          <tr><th>Feature</th><th>Implementation</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>SHA-256 Item Passport</td><td>Real cryptographic hash chain in SQLite. Photo + serial + title hashed. Append-only with tamper detection.</td><td><span class="badge badge-success">Built</span></td></tr>
+          <tr><td>Escrow Deposit System</td><td>Full state machine: pending → held → released/disputed → resolved. Enforced server-side.</td><td><span class="badge badge-success">Built</span></td></tr>
+          <tr><td>Multi-Dimensional Reputation</td><td>Renter: punctuality, item care, disputes. Owner: reliability, response time. Computed from rental history.</td><td><span class="badge badge-success">Built</span></td></tr>
+          <tr><td>Need-Based Matching</td><td>NLP keyword matching to curated equipment bundles. Returns best available items per tag.</td><td><span class="badge badge-success">Built</span></td></tr>
+          <tr><td>User Authentication</td><td>Demo: simulated Google SSO + OTP phone auth. Production would use Firebase Auth / OAuth 2.0.</td><td><span class="badge badge-warning">Simulated</span></td></tr>
+          <tr><td>Payment Processing</td><td>Deposit amounts tracked numerically. Real payments would integrate Stripe or payment gateway.</td><td><span class="badge badge-warning">Simulated</span></td></tr>
+          <tr><td>Push Notifications</td><td>Toast notifications in-app only. Production would add email/SMS via SendGrid or Twilio.</td><td><span class="badge badge-warning">Simulated</span></td></tr>
+          <tr><td>Blockchain Identity</td><td>SHA-256 hash chain provides tamper evidence. Full blockchain would add decentralized consensus.</td><td><span class="badge badge-info">Vision</span></td></tr>
+          <tr><td>AI Damage Assessment</td><td>Manual owner rating. Vision: computer vision model for automated condition grading from photos.</td><td><span class="badge badge-info">Vision</span></td></tr>
+          <tr><td>Community Mode</td><td>Database column exists. Full feature would add free borrowing, karma points, lending circles.</td><td><span class="badge badge-info">Vision</span></td></tr>
+        </tbody>
+      </table>
+
+      <div class="info-box" style="margin-top:var(--sp-6)">
+        <strong>Demo Authentication:</strong> This app uses simulated sign-in (Google prompt + hardcoded OTP "123456") and X-User-Id header-based sessions for demo purposes. In production, real OAuth 2.0 and session tokens would be used.
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-inner">
+      <div class="footer-text">
+        <strong id="footer-app-name">RENTX</strong> &mdash; Peer-to-peer equipment sharing platform. Built for hackathon demo.
+      </div>
+      <ul class="footer-links">
+        <li><a href="#about">How It Works</a></li>
+        <li><a href="#browse">Browse</a></li>
+        <li><a href="#need-search">Smart Match</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  
+    <!-- ===== VIEW: ADMIN ===== -->
+    <section class="view" id="view-admin" aria-label="Admin Dashboard">
+      <div class="page-header">
+        <div>
+          <h2>Platform Command Center</h2>
+          <p>Real-time marketplace analytics and dispute resolution.</p>
+        </div>
+      </div>
+      
+      <!-- Analytics Grid -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--sp-4); margin-bottom: var(--sp-8);">
+        <div class="form-card" style="text-align: center;">
+          <div style="font-size: 0.9rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">24h Rental Volume</div>
+          <div style="font-size: 2.2rem; font-weight: 800; color: var(--primary);">₹3,52,500</div>
+          <div style="font-size: 0.85rem; color: var(--success); font-weight: 500;">↑ 12% from yesterday</div>
+        </div>
+        <div class="form-card" style="text-align: center;">
+          <div style="font-size: 0.9rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Active Rentals</div>
+          <div style="font-size: 2.2rem; font-weight: 800; color: var(--text-primary);">38</div>
+          <div style="font-size: 0.85rem; color: var(--text-muted);">Currently in possession</div>
+        </div>
+        <div class="form-card" style="text-align: center;">
+          <div style="font-size: 0.9rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Escrow Secured</div>
+          <div style="font-size: 2.2rem; font-weight: 800; color: var(--success);">₹10,62,400</div>
+          <div style="font-size: 0.85rem; color: var(--text-muted);">Protected funds</div>
+        </div>
+      </div>
+
+      <!-- Action Center -->
+      <div class="form-card" style="margin-bottom:var(--sp-8)">
+        <h3 style="color: var(--danger); display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+          <span style="background: var(--danger-soft); padding: 4px 10px; border-radius: 20px; font-size: 0.9rem;">1 Open Dispute</span> Action Required
+        </h3>
+        
+        <div id="admin-disputes-list" style="display: flex; flex-direction: column; gap: 1rem;">
+          <div id="demo-dispute-card" style="background: var(--bg-body); border: 1px solid var(--danger-soft); border-radius: var(--radius-md); padding: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+              <div style="flex: 1;">
+                <strong style="font-size: 1.1rem; color: var(--danger);">Dispute #882: Sony Alpha A7 IV Camera</strong>
+                <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 8px; line-height: 1.5;">
+                  <strong style="color:var(--text-primary);">Owner (Maya Lin):</strong> Claims the lens was deeply scratched during the rental period. Requested full escrow deposit.<br>
+                  <strong style="color:var(--text-primary);">Renter (Jordan Lee):</strong> Claims the scratch was already there at pickup and the owner is trying to scam them.
+                </div>
+                <div style="margin-top: 12px; font-weight: 700; color: var(--text-primary); font-size: 1rem;">
+                  Escrow Frozen: <span style="color: var(--danger);">₹12,450</span>
+                </div>
+              </div>
+              <div style="display: flex; gap: 0.5rem; flex-direction: column; min-width: 200px;">
+                <button class="btn btn-primary" onclick="app.resolveDispute('owner')" style="background: var(--success); border-color: var(--success); color: white;">Transfer to Owner</button>
+                <button class="btn btn-secondary" onclick="app.resolveDispute('renter')">Refund Renter</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  <!-- ========== MODALS ========== -->
+  
+  <!-- Product Details Modal / Item Passport / Management -->
+  <div class="modal-overlay" id="modal-product" role="dialog" aria-modal="true" aria-labelledby="product-modal-title">
+    <div class="modal-box" style="max-width: 800px; width: 95%;">
+      <div class="modal-head">
+        <h3 id="product-modal-title">Item Details</h3>
+        <button class="modal-close" onclick="app.closeModal('modal-product')" aria-label="Close">&times;</button>
+      </div>
+      <div id="product-modal-content" style="padding: 1.5rem; max-height: 75vh; overflow-y: auto;">
+        <!-- Filled dynamically -->
+      </div>
+    </div>
+  </div>
+
+  
+  
+  <!-- Contact Modal -->
+  <div class="modal-overlay" id="modal-contact" role="dialog" aria-modal="true" aria-labelledby="contact-modal-title">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="contact-modal-title">Send a Message</h3>
+        <button class="modal-close" onclick="app.closeModal('modal-contact')" aria-label="Close dialog">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: var(--sp-4); color: var(--text-secondary);">
+          Sending a secure message to: <strong id="contact-recipient-name" style="color: var(--text-primary);">Owner</strong>
+        </p>
+        <form id="contact-form" onsubmit="app.submitContactMessage(event)">
+          <div class="form-group">
+            <label class="form-label" for="contact-message-body">Message Details</label>
+            <textarea id="contact-message-body" class="form-input" rows="4" placeholder="Hello! I'm interested in renting this and wanted to ask..." required></textarea>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="app.closeModal('modal-contact')">Cancel</button>
+            <button type="submit" class="btn btn-primary">Send Message</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chat Modal -->
+  <div class="modal-overlay" id="modal-chat" role="dialog" aria-modal="true" aria-labelledby="chat-modal-title">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="chat-modal-title">Rental Chat</h3>
+        <button class="modal-close" onclick="app.closeModal('modal-chat')" aria-label="Close dialog">&times;</button>
+      </div>
+      <div class="modal-body" style="display: flex; flex-direction: column; height: 60vh;">
+        <div id="chat-header-info" style="background: var(--bg-surface); padding: var(--sp-3); border-radius: 8px; margin-bottom: var(--sp-3); border: 1px solid var(--border-color); font-size: 0.9rem;">
+          <!-- Item, Owner, Borrower info will be injected here -->
+        </div>
+        
+        <div id="chat-messages-container" style="flex: 1; overflow-y: auto; background: #f9f9f9; padding: var(--sp-3); border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: var(--sp-3); margin-bottom: var(--sp-3);">
+          <!-- Messages will be injected here -->
+        </div>
+        
+        <form id="chat-form" style="display: flex; gap: var(--sp-2);" onsubmit="app.submitChatMessage(event)">
+          <input type="text" id="chat-input-body" class="form-input" style="flex: 1; margin-bottom: 0;" placeholder="Type your message..." required autocomplete="off">
+          <button type="submit" class="btn btn-primary" style="white-space: nowrap;">Send</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+
+
+  <!-- Borrow Modal -->
+  <div class="modal-overlay" id="modal-borrow" role="dialog" aria-modal="true" aria-labelledby="borrow-modal-title">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 id="borrow-modal-title">Borrow Equipment</h3>
+        <button class="modal-close" onclick="app.closeModal('modal-borrow')" aria-label="Close">&times;</button>
+      </div>
+      <form id="borrow-form">
+          <input type="hidden" id="borrow-item-id">
+          
+          <div style="display:flex; gap:1rem; margin-bottom:var(--sp-4);">
+            <div class="form-group" style="flex:1;">
+              <label class="form-label" for="borrow-start">From (Start Date)</label>
+              <input type="date" class="form-input" id="borrow-start" required onchange="app.checkBorrowAvailability()">
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label class="form-label" for="borrow-end">To (End Date)</label>
+              <input type="date" class="form-input" id="borrow-end" required onchange="app.checkBorrowAvailability()">
+            </div>
+          </div>
+          
+          <div id="borrow-availability-msg" class="form-hint" style="margin-bottom:var(--sp-4); font-weight: 500;">Select dates to check availability</div>
+
+          <div class="quote-box" style="margin-bottom:var(--sp-5)">
+            <div class="quote-row"><span>Daily Rate</span><span class="quote-val" id="borrow-quote-daily">₹0</span></div>
+            <div class="quote-row"><span>Duration</span><span class="quote-val" id="borrow-quote-duration">0 days</span></div>
+            <div class="quote-row"><span>Rental Total</span><span class="quote-val total" id="borrow-quote-total">₹0</span></div>
+            <div class="quote-row"><span>Escrow Deposit</span><span class="quote-val deposit" id="borrow-quote-deposit">₹0</span></div>
+            <div class="quote-row" style="margin-top:0.5rem; padding-top:0.5rem; border-top:1px solid var(--border)">
+              <strong>Total Payable</strong><strong class="quote-val total" id="borrow-quote-payable">₹0</strong>
+            </div>
+          </div>
+          <button type="submit" id="borrow-submit-btn" class="btn btn-primary btn-block" disabled>Submit Borrow Request</button>
+        </form>
+    </div>
+  </div>
+
+  <!-- Confirm Return Modal -->
+  <div class="modal-overlay" id="modal-confirm-return" role="dialog" aria-modal="true" aria-labelledby="confirm-return-title">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 id="confirm-return-title">Confirm Return &amp; Rate</h3>
+        <button class="modal-close" onclick="app.closeModal('modal-confirm-return')" aria-label="Close">&times;</button>
+      </div>
+      <form id="confirm-return-form">
+        <input type="hidden" id="confirm-rental-id">
+        <div class="form-group">
+          <label class="form-label" for="confirm-rating">Condition Rating</label>
+          <select class="form-select" id="confirm-rating" required>
+            <option value="5">5 — Pristine (returned as-new)</option>
+            <option value="4">4 — Good (minor wear)</option>
+            <option value="3" selected>3 — Fair (noticeable wear)</option>
+            <option value="2">2 — Poor (visible damage)</option>
+            <option value="1">1 — Damaged (major issues)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="confirm-notes">Inspection Notes</label>
+          <textarea class="form-textarea" id="confirm-notes" rows="3" placeholder="Describe the item condition..." maxlength="500"></textarea>
+        </div>
+        <button type="submit" class="btn btn-success btn-block">Confirm &amp; Release Escrow</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Dispute Modal -->
+  <div class="modal-overlay" id="modal-dispute" role="dialog" aria-modal="true" aria-labelledby="dispute-title">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 id="dispute-title">Open Dispute</h3>
+        <button class="modal-close" onclick="app.closeModal('modal-dispute')" aria-label="Close">&times;</button>
+      </div>
+      <form id="dispute-form">
+        <input type="hidden" id="dispute-rental-id">
+        <div class="form-group">
+          <label class="form-label" for="dispute-reason">Describe the issue</label>
+          <textarea class="form-textarea" id="dispute-reason" rows="4" placeholder="What went wrong? Describe the damage or issue..." required maxlength="500"></textarea>
+        </div>
+        <button type="submit" class="btn btn-danger btn-block">Submit Dispute</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Resolve Dispute Modal -->
+  <div class="modal-overlay" id="modal-resolve" role="dialog" aria-modal="true" aria-labelledby="resolve-title">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 id="resolve-title">Arbitrate Settlement</h3>
+        <button class="modal-close" onclick="app.closeModal('modal-resolve')" aria-label="Close">&times;</button>
+      </div>
+      <form id="resolve-form">
+        <input type="hidden" id="resolve-rental-id">
+        <div class="form-group">
+          <label class="form-label" for="resolve-payout">Resolution</label>
+          <select class="form-select" id="resolve-payout" required>
+            <option value="refund_renter">Full Refund to Renter</option>
+            <option value="keep_deposit">Owner Keeps Deposit</option>
+            <option value="split">Split 50/50</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="resolve-notes">Settlement Notes</label>
+          <textarea class="form-textarea" id="resolve-notes" rows="3" placeholder="Explain the resolution..." maxlength="500"></textarea>
+        </div>
+        <button type="submit" class="btn btn-warning btn-block">Finalize Settlement</button>
+      </form>
+    </div>
+  </div>
+
+  
+
+  <!-- ========== TOAST CONTAINER ========== -->
+  <div class="toast-container" id="toast-container" aria-live="polite" role="status"></div>
+
+  <!-- App script -->
+  <script src="/static/app.js?v=2001"></script>
+
+  <!-- Owner Review Modal -->
+  <div class="modal-overlay" id="modal-owner-review" role="dialog" aria-modal="true" aria-labelledby="owner-review-modal-title">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="owner-review-modal-title">Rate your experience (Owner)</h3>
+        <button class="modal-close" onclick="app.closeModal('modal-owner-review')" aria-label="Close dialog">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="owner-review-form" onsubmit="app.submitOwnerReview(event)">
+          <div class="form-group">
+            <label class="form-label" for="owner-service-rating">How was the owner's service?</label>
+            <select class="form-select" id="owner-service-rating" required>
+              <option value="5">⭐⭐⭐⭐⭐ (5) Excellent</option>
+              <option value="4">⭐⭐⭐⭐ (4) Good</option>
+              <option value="3">⭐⭐⭐ (3) Okay</option>
+              <option value="2">⭐⭐ (2) Poor</option>
+              <option value="1">⭐ (1) Terrible</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="owner-product-condition">Was the product in good condition?</label>
+            <select class="form-select" id="owner-product-condition" required>
+              <option value="Excellent">Excellent</option>
+              <option value="Good">Good</option>
+              <option value="Fair">Fair</option>
+              <option value="Poor">Poor</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="owner-price-fairness">Was the pricing fair?</label>
+            <select class="form-select" id="owner-price-fairness" required>
+              <option value="Very fair">Very fair</option>
+              <option value="Fair">Fair</option>
+              <option value="Expensive">Expensive</option>
+              <option value="Very expensive">Very expensive</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="owner-review-comment">Review (Optional)</label>
+            <textarea id="owner-review-comment" class="form-input" rows="3" placeholder="Owner was helpful and the laptop was in good condition."></textarea>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="app.closeModal('modal-owner-review')">Cancel</button>
+            <button type="submit" class="btn btn-primary">Submit Review</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Item Review Modal -->
+  <div class="modal-overlay" id="modal-item-review" role="dialog" aria-modal="true" aria-labelledby="item-review-modal-title">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="item-review-modal-title">Rate the Product</h3>
+        <button class="modal-close" onclick="app.closeModal('modal-item-review')" aria-label="Close dialog">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="item-review-form" onsubmit="app.submitItemReview(event)">
+          <div class="form-group">
+            <label class="form-label" for="item-rating">Item rating</label>
+            <select class="form-select" id="item-rating" required>
+              <option value="5">⭐⭐⭐⭐⭐ (5) Excellent</option>
+              <option value="4">⭐⭐⭐⭐ (4) Good</option>
+              <option value="3">⭐⭐⭐ (3) Okay</option>
+              <option value="2">⭐⭐ (2) Poor</option>
+              <option value="1">⭐ (1) Terrible</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="item-product-condition">Product condition</label>
+            <select class="form-select" id="item-product-condition" required>
+              <option value="Excellent">Excellent</option>
+              <option value="Good">Good</option>
+              <option value="Fair">Fair</option>
+              <option value="Poor">Poor</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="item-review-comment">Review (Optional)</label>
+            <textarea id="item-review-comment" class="form-input" rows="3" placeholder="Laptop was clean, fast and exactly as described."></textarea>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="app.closeModal('modal-item-review')">Cancel</button>
+            <button type="submit" class="btn btn-primary">Submit Review</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

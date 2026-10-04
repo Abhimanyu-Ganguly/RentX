@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120" width="100%" height="100%">
+  <!-- Icon: Geometric Exchange/X -->
+  <g transform="translate(20, 20)">
+    <path d="M 10 10 L 45 45 M 10 45 L 45 10" stroke="#0ea5e9" stroke-width="8" stroke-linecap="round" fill="none" />
+    <path d="M 45 45 L 60 45 L 45 60" stroke="#0ea5e9" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    <path d="M 45 10 L 60 10 L 45 -5" stroke="#0ea5e9" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    <circle cx="35" cy="35" r="28" stroke="currentColor" stroke-width="4" fill="none" opacity="0.8" />
+  </g>
+  
+  <!-- Wordmark -->
+  <text x="110" y="75" font-family="'Inter', sans-serif" font-size="52" font-weight="800" fill="currentColor" letter-spacing="-1">RENTX</text>
+</svg>
